@@ -19,8 +19,6 @@ import (
 	gorilla "github.com/gorilla/websocket"
 )
 
-//go:generate hel --type Batcher --output mock_batcher_test.go
-
 type Batcher interface {
 	BatchIncrementCounter(name string)
 	BatchCounter(name string) metricbatcher.BatchCounterChainer
@@ -60,7 +58,10 @@ func newFirehoseCounter(subscriptionID string, batcher Batcher) *firehoseCounter
 }
 
 func (f *firehoseCounter) Increment(typ events.Envelope_EventType) {
-	f.batcher.BatchIncrementCounter(fmt.Sprintf("sentMessagesFirehose.%s", f.subscriptionID))
+	f.batcher.BatchCounter("sentMessagesFirehose").
+		SetTag("subscription_id", f.subscriptionID).
+		Increment()
+
 	f.envelopeCounter.Increment(typ)
 }
 

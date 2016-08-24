@@ -34,6 +34,21 @@ If you have feedback on Loggregator features that you use, or want, feel free to
 * [Loggregator does not guarantee logs delivered in order](#loggregator-does-not-guarantee-logs-delivered-in-order)
 * [Workaround for Java multiline messages](#multi-line-java-message-workaround)
 * [FAQ](https://github.com/cloudfoundry/loggregator/wiki/FAQ)
+* Additional readmes
+  * [Bosh HM metrics Forwarder](src/boshhmforwarder/README.md)
+  * [DEA Logging Agent](src/deaagent/README.md)
+  * [Doppler](src/doppler/README.md)
+  * [LATS - Loggregator Acceptance Tests](src/lats/README.md)
+  * [Metron](src/metron/README.md)
+  * [Statsd-injector](src/statsd-injector/README.md)
+    * [Statsd Go Client](src/statsd-injector/tools/statsdGoClient/README.md)
+    * [Statsd Java Client](src/statsd-injector/tools/statsdJavaClient/README.md)
+    * [Statsd Ruby Client](src/statsd-injector/tools/statsdRubyClient/README.md)
+  * [Syslog Drain Binder](src/syslog_drain_binder/README.md)
+  * [Doppler Benchmarking](src/tools/dopplerbenchmark/README.md)
+  * [Metron Benchmarking](src/tools/metronbenchmark/README.md)
+  * [Traffic Controller](src/trafficcontroller/README.md)
+  * [Truncating Buffer](src/truncatingbuffer/README.md)
 
 ### Features
 
@@ -614,3 +629,7 @@ With the Java Logback library you do this by adding `%replace(%xException){'\n',
     }
 ```
 to replace the token with a regular newline again so it displays "properly" in Kibana.
+
+### Log Message Size Constraints
+
+Logs are emitted via UDP messages from Diego/DEA to Metron. Therefore, the maximum log message size from a DEA is ~60KiB (assuming overhead for the transporting envelope). Diego chunks longer log messages into multiple envelopes to mitigate this constraint.

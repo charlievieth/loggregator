@@ -46,7 +46,7 @@ var _ = Describe("AgentListener", func() {
 			close(listenerStopped)
 		}()
 
-		Eventually(loggertesthelper.TestLoggerSink.LogContents).Should(ContainSubstring("Listening on port " + address))
+		Eventually(loggertesthelper.TestLoggerSink.LogContents).Should(ContainSubstring("UDP listener listening on port " + address))
 	})
 
 	AfterEach(func() {
@@ -93,6 +93,7 @@ var _ = Describe("AgentListener", func() {
 			Eventually(mockBatcher.BatchAddCounterInput).Should(BeCalled(
 				With("dropsondeListener.receivedByteCount", uint64(len(expectedData))),
 				With("udpListener.receivedByteCount", uint64(len(expectedData))),
+				With("listeners.totalReceivedByteCount", uint64(len(expectedData))),
 			))
 		})
 	})

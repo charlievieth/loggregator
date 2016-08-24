@@ -3,6 +3,7 @@ name: loggregator-load-testing
 description: "Run load tests for loggregator."
 
 templates:
+  manifest.yml.erb: config/manifest.yml
   run.erb: bin/run
 
 packages:
@@ -16,8 +17,11 @@ properties:
   loggregator_load_testing.time:
     description: "The time that the errand should run for (format: https://golang.org/pkg/time/#ParseDuration)."
     default: 5m
-  loggregator_load_testing.instances:
+  loggregator_load_testing.emitter_instances:
     description: "The number of instances that concurrently emit messages."
+    default: 1
+  loggregator_load_testing.counter_instances:
+    description: "The number of instances that concurrently receive messages."
     default: 1
 
   loggregator_load_testing.org:
@@ -43,6 +47,10 @@ properties:
     description: "The CF username used to push the apps and connect to the firehose."
   loggregator_load_testing.password:
     description: "The CF password used to push the apps and connect to the firehose."
+
+  loggregator_load_testing.route_scheme:
+    description: "The scheme used to communicate with the cf apps."
+    default: "https"
 
   ssl.skip_cert_verify:
     description: "Specifies that the job is allowed to skip SSL verification."

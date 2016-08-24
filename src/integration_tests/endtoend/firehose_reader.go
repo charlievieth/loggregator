@@ -2,8 +2,8 @@ package endtoend
 
 import (
 	"crypto/tls"
+	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
@@ -21,16 +21,16 @@ type FirehoseReader struct {
 	DopplerReceivedMessageCount float64
 	DopplerSentMessageCount     float64
 
-	logMessageMu   sync.Mutex
-	lastLogMessage *events.Envelope
+	LogMessages chan *events.Envelope
 }
 
-func NewFirehoseReader() *FirehoseReader {
-	consumer, msgChan := initiateFirehoseConnection()
+func NewFirehoseReader(tcPort int) *FirehoseReader {
+	consumer, msgChan := initiateFirehoseConnection(tcPort)
 	return &FirehoseReader{
-		consumer: consumer,
-		msgChan:  msgChan,
-		stopChan: make(chan struct{}),
+		consumer:    consumer,
+		msgChan:     msgChan,
+		LogMessages: make(chan *events.Envelope, 100),
+		stopChan:    make(chan struct{}),
 	}
 }
 
@@ -57,10 +57,11 @@ func (r *FirehoseReader) Read() {
 			r.DopplerSentMessageCount = float64(msg.CounterEvent.GetTotal())
 		}
 
-		if isLogMessage(msg) {
-			r.logMessageMu.Lock()
-			r.lastLogMessage = msg
-			r.logMessageMu.Unlock()
+		if msg.GetEventType() == events.Envelope_LogMessage {
+			select {
+			case r.LogMessages <- msg:
+			default:
+			}
 		}
 	}
 }
@@ -70,15 +71,10 @@ func (r *FirehoseReader) Close() {
 	r.consumer.Close()
 }
 
-func (r *FirehoseReader) LastLogMessage() *events.Envelope {
-	r.logMessageMu.Lock()
-	defer r.logMessageMu.Unlock()
-	return r.lastLogMessage
-}
-
-func initiateFirehoseConnection() (*consumer.Consumer, <-chan *events.Envelope) {
+func initiateFirehoseConnection(tcPort int) (*consumer.Consumer, <-chan *events.Envelope) {
 	localIP, _ := localip.LocalIP()
-	firehoseConnection := consumer.New("ws://"+localIP+":49629", &tls.Config{InsecureSkipVerify: true}, nil)
+	url := fmt.Sprintf("ws://%s:%d", localIP, tcPort)
+	firehoseConnection := consumer.New(url, &tls.Config{InsecureSkipVerify: true}, nil)
 	msgChan, _ := firehoseConnection.Firehose("uniqueId", "")
 	return firehoseConnection, msgChan
 }
@@ -101,8 +97,4 @@ func dopplerReceivedMessageCount(msg *events.Envelope) bool {
 
 func dopplerSentMessageCount(msg *events.Envelope) bool {
 	return msg.GetEventType() == events.Envelope_CounterEvent && strings.HasPrefix(msg.CounterEvent.GetName(), "sentMessagesFirehose") && msg.GetOrigin() == "DopplerServer"
-}
-
-func isLogMessage(msg *events.Envelope) bool {
-	return msg.GetEventType() == events.Envelope_LogMessage
 }
