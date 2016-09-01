@@ -11,6 +11,17 @@
       instance_id = spec.index
     end
 
+    # Handle renamed properties
+    uaaClient = p("loggregator.uaa.client")
+    oldUaaClient = p("loggregator.uaa_client_id")
+    unless oldUaaClient.empty?
+        uaaClient = oldUaaClient
+    end
+
+    uaaSecret = p("loggregator.uaa.client_secret")
+    if uaaSecret.empty?
+        uaaSecret = p("uaa.clients.doppler.secret")
+    end
 %>
 {
     "JobName": "<%= job_name %>",
@@ -36,8 +47,8 @@
     <% scheme = p("login.protocol")
         domain = p("system_domain") %>
     "UaaHost": "<%= p("uaa.url", "#{scheme}://uaa.#{domain}") %>",
-    "UaaClientId": "<%= p("doppler.uaa_client_id") %>",
-    "UaaClientSecret": "<%= p("uaa.clients.doppler.secret") %>"
+    "UaaClient": "<%= uaaClient %>",
+    "UaaClientSecret": "<%= uaaSecret %>"
     <% if_p("syslog_daemon_config") do |_| %>
     , "Syslog": "vcap.trafficcontroller"
     <% end %>

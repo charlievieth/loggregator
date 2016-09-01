@@ -1,4 +1,4 @@
-package domain_test
+package backoff_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestDomain(t *testing.T) {
+func TestBackoff(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Domain Suite")
+	RunSpecs(t, "Backoff Suite")
 }

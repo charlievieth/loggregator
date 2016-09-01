@@ -193,7 +193,9 @@ func SetupMetron(etcdClientURL, proto string) (func(), int, func()) {
 	Expect(metronPath).ToNot(BeEmpty())
 
 	By("starting metron")
-	protocols := []metronConfig.Protocol{metronConfig.Protocol(proto)}
+	protocols := metronConfig.Protocols{
+		metronConfig.Protocol(proto): struct{}{},
+	}
 	metronPort := getPort(metronPortOffset)
 	metronConf := metronConfig.Config{
 		Index:        jobIndex,
@@ -287,7 +289,7 @@ func SetupTrafficcontroller(etcdClientURL string, dopplerPort, metronPort int) (
 
 		ApiHost:         "http://127.0.0.1:65530",
 		UaaHost:         "http://127.0.0.1:65531",
-		UaaClientId:     "bob",
+		UaaClient:       "bob",
 		UaaClientSecret: "yourUncle",
 	}
 

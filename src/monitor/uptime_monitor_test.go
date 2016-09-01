@@ -9,7 +9,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/gogo/protobuf/proto"
 )
 
 const (
@@ -39,24 +38,40 @@ var _ = Describe("Uptime", func() {
 			wg.Wait()
 		})
 
+		var fetchValueMetrics = func() []*events.ValueMetric {
+			var results []*events.ValueMetric
+			for _, m := range fakeEventEmitter.GetMessages() {
+				e, ok := m.Event.(*events.ValueMetric)
+				if ok {
+					results = append(results, e)
+				}
+			}
+
+			return results
+		}
+
+		var fetchNumOfMetrics = func() int {
+			return len(fetchValueMetrics())
+		}
+
+		var fetchLatestValue = func() float64 {
+			metrics := fetchValueMetrics()
+			if len(metrics) <= 0 {
+				return 0
+			}
+
+			return metrics[len(metrics)-1].GetValue()
+		}
+
 		It("returns a value metric containing uptime after specified time", func() {
-			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.ValueMetric)).To(Equal(&events.ValueMetric{
-				Name:  proto.String("Uptime"),
-				Value: proto.Float64(0),
-				Unit:  proto.String("seconds"),
-			}))
+			Eventually(fetchNumOfMetrics).Should(BeNumerically(">", 0))
+			metric := fetchValueMetrics()[0]
+			Expect(metric.GetName()).To(Equal("Uptime"))
+			Expect(metric.GetUnit()).To(Equal("seconds"))
 		})
 
 		It("reports increasing uptime value", func() {
-			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.ValueMetric)).To(Equal(&events.ValueMetric{
-				Name:  proto.String("Uptime"),
-				Value: proto.Float64(0),
-				Unit:  proto.String("seconds"),
-			}))
-
-			Eventually(getLatestUptime).Should(Equal(1.0))
+			Eventually(fetchLatestValue, 3).Should(BeNumerically(">", 0))
 		})
 	})
 
