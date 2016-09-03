@@ -40,3 +40,33 @@ func (u *UDPWrapper) Write(client Client, message []byte, chainers ...metricbatc
 
 	return nil
 }
+
+// NO-OP UDPWrapper - does not write anything.
+type NopUDPWrapper struct {
+	sharedSecret []byte
+	logger       *gosteno.Logger
+}
+
+func NewNopUDPWrapper(sharedSecret []byte, logger *gosteno.Logger) *NopUDPWrapper {
+	return &NopUDPWrapper{
+		sharedSecret: sharedSecret,
+		logger:       logger,
+	}
+}
+
+// Write nothing.
+func (u *NopUDPWrapper) Write(client Client, message []byte, chainers ...metricbatcher.BatchCounterChainer) error {
+	signedMessage := signature.SignMessage(message, u.sharedSecret)
+
+	metrics.BatchIncrementCounter("udp.sentMessageCount")
+	metrics.BatchAddCounter("udp.sentByteCount", uint64(len(signedMessage)))
+
+	// The TLS side writes this metric in the batch.Writer.  For UDP,
+	// it needs to be done here.
+	metrics.BatchIncrementCounter("DopplerForwarder.sentMessages")
+	for _, chainer := range chainers {
+		chainer.SetTag("protocol", "udp").Increment()
+	}
+
+	return nil
+}

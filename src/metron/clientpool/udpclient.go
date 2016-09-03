@@ -76,3 +76,33 @@ func (c *UDPClient) Write(data []byte) (int, error) {
 
 	return writeCount, err
 }
+
+type NopUDPClient struct {
+	addr   *net.UDPAddr
+	logger *gosteno.Logger
+}
+
+func NewNopUDPClient(logger *gosteno.Logger, address string) (*NopUDPClient, error) {
+	la, err := net.ResolveUDPAddr("udp", address)
+	if err != nil {
+		return nil, err
+	}
+	return &NopUDPClient{logger: logger, addr: la}, nil
+}
+
+func (c *NopUDPClient) Connect() error { return nil }
+
+func (c *NopUDPClient) Scheme() string { return "udp" }
+
+func (c *NopUDPClient) Address() string { return c.addr.String() }
+
+func (c *NopUDPClient) Close() error { return nil }
+
+func (c *NopUDPClient) Write(data []byte) (int, error) {
+	if len(data) == 0 {
+		return 0, nil
+	}
+	writeCount := len(data)
+	logging.Debugf(c.logger, "Wrote %d bytes to %s", writeCount, c.Address())
+	return writeCount, nil
+}

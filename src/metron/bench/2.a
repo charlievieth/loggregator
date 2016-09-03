@@ -1,0 +1,3 @@
+BenchmarkMetron-4      	10000000       	     10033 ns/op       	    2873 B/op  	      38 allocs/op
+PASS
+ok     	metron/bench   	110.759s

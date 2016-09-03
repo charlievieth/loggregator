@@ -44,6 +44,7 @@ func (d *DopplerForwarder) Write(message []byte, chainers ...metricbatcher.Batch
 
 	client, err := d.clientPool.RandomClient()
 	if err != nil {
+		// panic(fmt.Errorf("%s: %#v %T\n", err, d.clientPool, d.clientPool))
 		d.logger.Errord(map[string]interface{}{
 			"error": err.Error(),
 		}, "DopplerForwarder: failed to pick a client")
